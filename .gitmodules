@@ -1,0 +1,3 @@
+[submodule "modules/pubmed"]
+	path = modules/pubmed
+	url = https://github.com/spyysalo/pubmed.git
