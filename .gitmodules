@@ -1,3 +1,6 @@
 [submodule "modules/pubmed"]
 	path = modules/pubmed
 	url = https://github.com/spyysalo/pubmed.git
+[submodule "modules/pubtator"]
+	path = modules/pubtator
+	url = https://github.com/spyysalo/pubtator.git
