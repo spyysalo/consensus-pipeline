@@ -13,6 +13,10 @@ Download PubMed baseline .xml.gz files.
 
 Check checksums for PubMed baseline .xml.gz files
 
+# 150-download-pubtator.sh
+
+Download PubTator offsets .gz file.
+
 # 200-extract-tiabs.sh
 
 Extract titles and abstracts from PubMed baseline .xml.gz files, store
@@ -21,3 +25,7 @@ in .tar.gz files.
 # 210-make-tiab-db.sh
 
 Make SQLite DB containing PubMed baseline texts from .tar.gz files.
+
+# 250-make-pubtator-db.sh
+
+Make SQLite DB containing PubTator annotations converted to standoff.

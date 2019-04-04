@@ -14,27 +14,27 @@ SCRIPT="$(basename "$0")"
 # https://stackoverflow.com/a/246128
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-DATADIR="$SCRIPTDIR/../data/pubmed/original_data"
+OUTDIR="$SCRIPTDIR/../data/pubmed/original_data"
 
-mkdir -p "$DATADIR"
+mkdir -p "$OUTDIR"
 
 for i in $(seq -w 1 "$STEP" 972); do
     # package
     r="pubmed19n0$i.xml.gz"
     url="$BASEURL/$r"
-    if [ -e "$DATADIR/$r" ]; then
-	echo "$SCRIPT:$DATADIR/$r exists, skipping ..." >&2
+    if [ -e "$OUTDIR/$r" ]; then
+	echo "$SCRIPT:$OUTDIR/$r exists, skipping ..." >&2
     else
-	echo "$SCRIPT:downloading $url to $DATADIR ..." >&2
-	wget -P "$DATADIR" "$url"
+	echo "$SCRIPT:downloading $url to $OUTDIR ..." >&2
+	wget -P "$OUTDIR" "$url"
     fi
     # checksum
     r="pubmed19n0$i.xml.gz.md5"
     url="$BASEURL/$r"
-    if [ -e "$DATADIR/$r" ]; then
-	echo "$SCRIPT:$DATADIR/$r exists, skipping ..." >&2
+    if [ -e "$OUTDIR/$r" ]; then
+	echo "$SCRIPT:$OUTDIR/$r exists, skipping ..." >&2
     else
-	echo "$SCRIPT:downloading $url to $DATADIR ..." >&2
-	wget -P "$DATADIR" "$url"
+	echo "$SCRIPT:downloading $url to $OUTDIR ..." >&2
+	wget -P "$OUTDIR" "$url"
     fi
 done

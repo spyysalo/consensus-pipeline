@@ -9,14 +9,14 @@ SCRIPT="$(basename "$0")"
 # https://stackoverflow.com/a/246128
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-DATADIR="$SCRIPTDIR/../data/pubmed/original_data"
+INDIR="$SCRIPTDIR/../data/pubmed/original_data"
 
-if [ ! -d "$DATADIR" ]; then
-    echo "$SCRIPT:$DATADIR does not exist, skip check"
+if [ ! -d "$INDIR" ]; then
+    echo "$SCRIPT:$INDIR does not exist, skip check"
     exit 0
 fi
 
-for f in $(find "$DATADIR" -name '*.xml.gz' | sort); do
+for f in $(find "$INDIR" -name '*.xml.gz' | sort); do
     c="$f.md5"
     if [ ! -e "$c" ]; then
 	echo "$SCRIPT:missing checksum $c, removing $f" >&2

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Insert titles and abstracts into db.
+# Insert PubMed titles and abstracts into DB.
 
 set -euo pipefail
 
@@ -15,14 +15,14 @@ INDIR="$SCRIPTDIR/../data/pubmed/texts"
 
 OUTDIR="$SCRIPTDIR/../data/pubmed/db"
 
-command="$MODULEDIR/scripts/makedb.py"
-
 if [[ -z $(find "$INDIR" -name '*.tar.gz') ]]; then
     echo "$SCRIPT:ABORT: no .tar.gz files found in $INDIR"
     exit 1
 fi
 
-echo "Running \"$command\" on data in $INDIR" >&2
+command="$MODULEDIR/scripts/makedb.py"
+
+echo "$SCRIPT:running \"$command\" on data in $INDIR" >&2
 
 mkdir -p "$OUTDIR"
 
