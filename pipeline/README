@@ -1,0 +1,23 @@
+# Processing stages:
+
+# 100-remove-checksumerr.sh
+
+Check for checksum errors in PubMed baseline .xml.gz files, delete any
+with mismatches.
+
+# 110-download-pubmed.sh
+
+Download PubMed baseline .xml.gz files.
+
+# 120-check-checksums.sh
+
+Check checksums for PubMed baseline .xml.gz files
+
+# 200-extract-tiabs.sh
+
+Extract titles and abstracts from PubMed baseline .xml.gz files, store
+in .tar.gz files.
+
+# 210-make-tiab-db.sh
+
+Make SQLite DB containing PubMed baseline texts from .tar.gz files.
