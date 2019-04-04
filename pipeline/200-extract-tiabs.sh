@@ -22,5 +22,5 @@ command="$MODULEDIR/extractTIABs.py"
 echo "$SCRIPT:running \"$command\" with $PARALLEL_JOBS jobs on data in $INDIR"\
      >&2
 
-find "$INDIR" -name '*.xml.gz' \
+find "$INDIR" -name '*.xml.gz' | sort \
      | parallel --jobs $PARALLEL_JOBS python3 "$command" -a -z -o "$OUTDIR"

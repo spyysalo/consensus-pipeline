@@ -26,5 +26,5 @@ echo "Running \"$command\" on data in $INDIR" >&2
 
 mkdir -p "$OUTDIR"
 
-find "$INDIR" -name '*.tar.gz' \
+find "$INDIR" -name '*.tar.gz' | sort \
     | xargs python3 "$command" "$OUTDIR/pubmed.sqlite"

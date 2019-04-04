@@ -16,7 +16,7 @@ if [ ! -d "$DATADIR" ]; then
     exit 0
 fi
 
-for f in $(find "$DATADIR" -name '*.xml.gz'); do
+for f in $(find "$DATADIR" -name '*.xml.gz' | sort); do
     c="$f.md5"
     if [ ! -e "$c" ]; then
 	echo "$SCRIPT:missing checksum $c, removing $f" >&2
