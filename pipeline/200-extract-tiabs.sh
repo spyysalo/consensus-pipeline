@@ -28,7 +28,7 @@ total=0
 files=""
 for f in $(find "$INDIR" -name '*.xml.gz' | sort); do
     o="$OUTDIR/$(basename "$f" .xml.gz).tar.gz"
-    if [ -e "$o" ]; then
+    if [ -s "$o" ]; then
 	echo "$SCRIPT:output exists for $(basename "$f")" >&2
 	found=$((found+1))
     else
