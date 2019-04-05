@@ -21,10 +21,17 @@ if [[ ! -e "$INFILE" ]]; then
     exit 1
 fi
 
+dbpath="$OUTDIR/pubtator-original.sqlite"
+
+if [ -s "$dbpath" ]; then
+    echo "$SCRIPT:$dbpath exists, assuming complete and exiting."
+    exit 0
+fi
+
 command="$MODULEDIR/convertpubtator.py"
 
 echo "$SCRIPT:running \"$command\" on $INFILE" >&2
 
 mkdir -p "$OUTDIR"
 
-python3 "$command" -v -D -o "$OUTDIR/pubtator-original.sqlite" "$INFILE"
+python3 "$command" -v -D -o "$dbpath" "$INFILE"
