@@ -7,6 +7,7 @@ import os
 
 from collections import defaultdict
 from itertools import product
+from math import floor, log10
 
 import colorsys
 
@@ -16,10 +17,10 @@ import matplotlib.colors as mc
 
 
 COLOR_BY_TYPE = {
-    'Chemical': 'mediumturquoise',
-    'Gene': 'blue',
-    'Disease': 'red',
-    'Organism': 'orange',
+    'Chemical': '#58A6D1',
+    'Gene': '#29698A',
+    'Disease': '#FB4C4A',
+    'Organism': '#F39F3F',
     'TOTAL': '#22CC22',
 }
 
@@ -43,6 +44,15 @@ def lighten_color(color, amount=0.5):
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
+def millify(n):
+    # https://stackoverflow.com/a/3155023
+    n = float(n)
+    millnames = ['',' K',' M',' B',' T']
+    millidx = max(0, min(len(millnames)-1,
+                         int(floor(0 if n == 0 else log10(abs(n))/3))))
+    return '{:.0f}{}'.format(n / 10**(3 * millidx), millnames[millidx])
+
+
 def plot_venn3(stats, type_, fn):
     labels, count_by_asets = set(), {}
     for asets, count, ratio in stats:
@@ -50,26 +60,30 @@ def plot_venn3(stats, type_, fn):
         count_by_asets[asets] = int(count)
     labels = sorted(labels)
 
-    Abc = count_by_asets[labels[0]]
-    aBc = count_by_asets[labels[1]]
-    abC = count_by_asets[labels[2]]
-    ABc = count_by_asets['/'.join([labels[0],labels[1]])]
-    AbC = count_by_asets['/'.join([labels[0],labels[2]])]
-    aBC = count_by_asets['/'.join([labels[1],labels[2]])]
-    ABC = count_by_asets['/'.join(labels)]
+    c = {}
+    c['100'] = count_by_asets[labels[0]]
+    c['010'] = count_by_asets[labels[1]]
+    c['001'] = count_by_asets[labels[2]]
+    c['110'] = count_by_asets['/'.join([labels[0],labels[1]])]
+    c['101'] = count_by_asets['/'.join([labels[0],labels[2]])]
+    c['011'] = count_by_asets['/'.join([labels[1],labels[2]])]
+    c['111'] = count_by_asets['/'.join(labels)]
 
-    # print((Abc, aBc, ABc, abC, AbC, aBC, ABC))
-    v = venn3(subsets=(Abc, aBc, ABc, abC, AbC, aBC, ABC), set_labels=labels)
-    #v.get_label_by_id('100').set_text('Unknown')
+    order = ('100', '010', '110', '001', '101', '011', '111')
+    plt.figure(figsize=(4, 4))
+    v = venn3(subsets=[c[o] for o in order], set_labels=labels)
+    v.get_label_by_id('100').set_text('Unknown')
 
     for patch in (''.join(p) for p in product('01', repeat=3)):
         # ['000', '001', '010', '011', '100', '101', '110', '111']
-        if patch != '000':
-            color = COLOR_BY_TYPE.get(type_, 'blue')
-            color = lighten_color(color, 0.75**patch.count('0'))
-            v.get_patch_by_id(patch).set_color(color)
+        if patch == '000':
+            continue
+        color = COLOR_BY_TYPE.get(type_, '#0000FF')
+        color = lighten_color(color, 1-0.5**patch.count('1'))
+        v.get_patch_by_id(patch).set_color(color)
+        v.get_label_by_id(patch).set_text(millify(c[patch]))
 
-    plt.savefig(fn)
+    plt.savefig(fn, dpi=600)
     print('Wrote {}'.format(fn))
     plt.close()
 
