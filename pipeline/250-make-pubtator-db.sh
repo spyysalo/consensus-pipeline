@@ -34,4 +34,5 @@ echo "$SCRIPT:running \"$command\" on $INFILE" >&2
 
 mkdir -p "$OUTDIR"
 
-python3 "$command" -v -D -o "$dbpath" "$INFILE"
+python3 "$command" --verbose  --retype-nominal --database --output "$dbpath" \
+	"$INFILE"
