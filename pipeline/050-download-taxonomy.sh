@@ -15,6 +15,11 @@ RANK_OUTPUT="$OUTDIR/rank.tsv"
 
 mkdir -p "$OUTDIR"
 
+if [ -e "$RANK_OUTPUT" ]; then
+    echo "$SCRIPT:$RANK_OUTPUT exists, skipping ..." >&2
+    exit 0
+fi
+
 echo "$SCRIPT:creating temporary work directory ..." >&2
 TMPDIR=`mktemp -d`
 
