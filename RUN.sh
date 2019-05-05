@@ -17,3 +17,7 @@ for script in $(find "$SCRIPTDIR" -maxdepth 1 -name '[0-9]*.sh' | sort); do
     echo
     "$script"
 done
+
+echo
+echo "---------- $br: DONE ----------" >&2
+echo
