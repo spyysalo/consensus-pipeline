@@ -246,7 +246,7 @@ def compare_annsets(label, names, annsets, stats, options):
         stats.annotation_totals[asets_str] += 1
     if len(doc_asets) == 0:
         stats.document_stats['match-all-empty'] += 1
-    elif len(doc_asets) == 1:
+    elif len(doc_asets) == 1 and list(doc_asets)[0] == tuple(sorted(all_asets)):
         stats.document_stats['match-all-nonempty'] += 1
     elif len(mm_asets) == 1:
         stats.document_stats['mismatch-{}'.format(mm_asets.pop())] += 1
@@ -327,7 +327,7 @@ def get_datasets(options):
         if not os.path.exists(path):
             print('no such file: {}'.format(path), file=sys.stderr)
             return None
-      # No context manager (and no close()) as this is read-only and
+        # No context manager (and no close()) as this is read-only and
         # close() can block for a long time for no apparent reason.
         db = sqlitedict.SqliteDict(path, flag='r', autocommit=False)
         datasets[name] = db
