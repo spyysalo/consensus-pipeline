@@ -54,4 +54,4 @@ command="$MODULEDIR/extractTIABs.py"
 echo "$SCRIPT:running \"$command\" with $PARALLEL_JOBS jobs on $missing files in $INDIR"
 
 echo "$files" \
-    | parallel --jobs $PARALLEL_JOBS python3 "$command" -a -z -o "$OUTDIR"
+    | parallel --jobs $PARALLEL_JOBS python3 "$command" -a -se -z -o "$OUTDIR"
