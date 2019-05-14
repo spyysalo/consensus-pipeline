@@ -40,4 +40,4 @@ command="$MODULEDIR/annalign.py"
 
 echo "$SCRIPT:running \"$command\" on $sourcedb and $aligndb"
 
-python3 "$command" -t -D "$sourcedb" "$sourcedb" "$aligndb" -o "$outdb"
+python3 "$command" -d 0.5 -t -D "$sourcedb" "$sourcedb" "$aligndb" -o "$outdb"
