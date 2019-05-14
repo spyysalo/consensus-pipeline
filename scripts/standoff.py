@@ -41,6 +41,24 @@ class Textbound(object):
         return '{}\t{} {} {}\t{}'.format(
             self.id, self.type, self.start, self.end, self.text)
 
+    @staticmethod
+    def parse_span(span):
+        if ';' not in span:
+            start, end = (int(i) for i in span.split(' '))
+        else:
+            start = min(int(f.split(' ')[0]) for f in span.split(';'))
+            end = max(int(f.split(' ')[1]) for f in span.split(';'))
+            warning('multi-span Textbound ({}), using max span ({} {})'.\
+                    format(span, start, end))
+        return start, end
+
+    @classmethod
+    def from_standoff(cls, line):
+        id_, type_span, text = line.split('\t')
+        type_, span = type_span.split(' ', 1)
+        start, end = cls.parse_span(span)
+        return cls(id_, type_, start, end, text)
+
 
 class Normalization(object):
     def __init__(self, id_, tb_id, norm_id, text):
