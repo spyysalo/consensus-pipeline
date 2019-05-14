@@ -89,7 +89,7 @@ class ComparisonStats(object):
         s.append('--- doc level ---')
         t = sum(self.document_stats.values())
         for k, v in sorted(self.document_stats.items()):
-            s.append('{}\t{}\t{:.2%}'.format(k, v, v/t))            
+            s.append('{}\t{}\t{:.2%}'.format(k, v, v/t))
         s.append('--- coverage ---')
         for k, v in self.missing_docs_by_dataset.items():
             s.append('{}\t{} missing'.format(v, k))
@@ -109,6 +109,13 @@ class Textbound(object):
 
     def overlaps(self, other):
         return not (self.end <= other.start or other.end <= self.start)
+
+    def span_matches(self, other):
+        return self.start == other.start and self.end == other.end
+
+    def contains(self, other):
+        return ((self.start <= other.start and self.end > other.end) or
+                (self.start < other.start and self.end >= other.end))
 
     def add_id_prefix(self, prefix):
         self.id = '{}:{}'.format(prefix, self.id)
@@ -156,7 +163,7 @@ class Normalization(object):
 
     def __repr__(self):
         return self.__str__()
-        
+
     @classmethod
     def from_standoff(cls, line):
         id_, type_ids, text = line.split('\t')
@@ -201,7 +208,7 @@ def parse_standoff(ann, source='<INPUT>', annset=None):
         for a in chain(textbounds, normalizations):
             a.add_id_prefix(annset)
             a.annset = annset
-            
+
     return textbounds
 
 
@@ -216,6 +223,21 @@ def find_overlapping(ann, annsets, ignore=None):
             if a.overlaps(ann):
                 overlapping.append(a)
     return overlapping
+
+
+def group_overlapping(ann, overlapping):
+    """Group into same-span, contained, containing, and other."""
+    same_span, contained, containing, other = [], [], [], []
+    for a in overlapping:
+        if ann.span_matches(a):
+            same_span.append(a)
+        elif ann.contains(a):
+            contained.append(a)
+        elif a.contains(ann):
+            containing.append(a)
+        else:
+            other.append(a)
+    return same_span, contained, containing, other
 
 
 def compare_annsets(label, names, annsets, stats, options):
@@ -246,7 +268,7 @@ def compare_annsets(label, names, annsets, stats, options):
         stats.annotation_totals[asets_str] += 1
     if len(doc_asets) == 0:
         stats.document_stats['match-all-empty'] += 1
-    elif len(doc_asets) == 1:
+    elif len(doc_asets) == 1 and list(doc_asets)[0] == tuple(sorted(all_asets)):
         stats.document_stats['match-all-nonempty'] += 1
     elif len(mm_asets) == 1:
         stats.document_stats['mismatch-{}'.format(mm_asets.pop())] += 1
@@ -268,11 +290,13 @@ def compare_annsets(label, names, annsets, stats, options):
             type_span = type_
         else:
             type_span = '{} {} {}'.format(type_, start, end)
-        overlap_strs = ['{}/{}'.format(a.text, a.type) for a in overlapping]
-        print('{}\t{}\t{}\t{}\t{}'.format(
-            label, ids, type_span, text, sorted(set(overlap_strs))))
+        overlap_strs = []
+        for overlap_group in group_overlapping(group[0], overlapping):
+            overlap_strs.append(['{}/{}'.format(a.text, a.type) for a in overlap_group])
+        fields = [label, ids, type_span, text] + [sorted(set(s)) for s in overlap_strs]
+        print('\t'.join(str(f) for f in fields))
 
-    
+
 def compare_datasets(datasets, options):
     stats = ComparisonStats()
     name1, db1 = list(datasets.items())[0]
@@ -327,7 +351,7 @@ def get_datasets(options):
         if not os.path.exists(path):
             print('no such file: {}'.format(path), file=sys.stderr)
             return None
-      # No context manager (and no close()) as this is read-only and
+        # No context manager (and no close()) as this is read-only and
         # close() can block for a long time for no apparent reason.
         db = sqlitedict.SqliteDict(path, flag='r', autocommit=False)
         datasets[name] = db
