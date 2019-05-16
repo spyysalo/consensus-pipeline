@@ -43,6 +43,10 @@ def get_annotation(standoff, id_):
                 raise NotImplementedError()
 
 
+def is_word(token):
+        return any(c for c in token if c.isalnum())    # loose definition
+
+
 def get_words(text, maximum, reverse=False):
     split = re.split(r'(\s+)', text)
     if reverse:
@@ -52,7 +56,7 @@ def get_words(text, maximum, reverse=False):
         if count >= maximum:
             break
         words.append(w)
-        if not w.isspace():
+        if is_word(w)
             count += 1
     if reverse:
         words = reversed(words)
