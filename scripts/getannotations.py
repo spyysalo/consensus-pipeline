@@ -44,7 +44,7 @@ def get_annotation(standoff, id_):
 
 
 def is_word(token):
-        return any(c for c in token if c.isalnum())    # loose definition
+    return any(c for c in token if c.isalnum())    # loose definition
 
 
 def get_words(text, maximum, reverse=False):
@@ -56,7 +56,7 @@ def get_words(text, maximum, reverse=False):
         if count >= maximum:
             break
         words.append(w)
-        if is_word(w)
+        if is_word(w):
             count += 1
     if reverse:
         words = reversed(words)
