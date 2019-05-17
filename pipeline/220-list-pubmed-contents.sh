@@ -26,11 +26,20 @@ outpath="$OUTDIR/pubmed.sqlite.listing"
 
 if [ -s "$outpath" ]; then
     echo "$SCRIPT:$outpath exists, skipping ..."
-    exit 0
+else
+    command="$SCRIPTDIR/../scripts/lssqlite.py"
+    echo "$SCRIPT:running \"$command\" on $inpath with output to $outpath" >&2
+    python3 "$command" "$inpath" > "$outpath"
 fi
 
-command="$SCRIPTDIR/../scripts/lssqlite.py"
+inpath="$outpath"
+outpath="$OUTDIR/pubmed.sqlite.listing.ids"
 
-echo "$SCRIPT:running \"$command\" on $inpath with output to $outpath" >&2
+if [ -s "$outpath" ]; then
+    echo "$SCRIPT:$outpath exists, skipping ..."
+else
+    echo "$SCRIPT:processing $inpath with output to $outpath" >&2
+    egrep '\.txt' < "$inpath" | perl -pe 's/\.txt//' > "$outpath"
+fi
 
-python3 "$command" "$inpath" > "$outpath"
+echo "SCRIPT:done." >&2
