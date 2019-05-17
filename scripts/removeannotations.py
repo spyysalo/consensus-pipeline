@@ -9,6 +9,7 @@ import os
 
 from collections import Counter, OrderedDict
 from itertools import chain
+from logging import warning, error
 
 from standoff import parse_standoff
 
@@ -17,6 +18,9 @@ try:
 except ImportError:
     error('failed to import sqlitedict, try `pip3 install sqlitedict`')
     raise
+
+
+ANN_SUFFIX, TXT_SUFFIX = '.ann', '.txt'
 
 
 def argparser():
@@ -28,10 +32,14 @@ def argparser():
                     help='accept annotation overlap as match')
     ap.add_argument('-r', '--random', metavar='RATIO', default=None,
                     type=float, help='process random RATIO of documents')
-    ap.add_argument('-s', '--suffix', default='.ann',
+    ap.add_argument('-s', '--suffix', default=ANN_SUFFIX,
                     help='suffix of annotation files')
+    ap.add_argument('-t', '--include-text', default=False, action='store_true',
+                    help='include text to align to in output')
     ap.add_argument('fromset', metavar='NAME:DB',
                     help='annotation set to remove from')
+    ap.add_argument('output', metavar='DB',
+                    help='output DB')
     ap.add_argument('sets', metavar='NAME:DB', nargs='+',
                     help='annotation sets to remove')
     return ap
@@ -61,40 +69,58 @@ def remove(annset1, annset2, options):
 def remove_datasets(datasets, options):
     name_from, db_from = list(datasets.items())[0]
     doc_count, missing_by_dataset = 0, Counter()
-    for key, val_from in db_from.items():
-        if options.limit is not None and doc_count >= options.limit:
-            break
-        if os.path.splitext(key)[1] != options.suffix:
-            continue
-        names, values, missing = [name_from], [val_from], False
-        for name, db in list(datasets.items())[1:]:
-            val = db.get(key)
-            if val is None:
-                missing_by_dataset[name] += 1
-                warning('{} not found for {}'.format(key, name))
-                missing = True
+    with sqlitedict.SqliteDict(options.output, autocommit=False) as out_db:
+        for key, val_from in db_from.items():
+            if options.limit is not None and doc_count >= options.limit:
+                break
+            root, suffix = os.path.splitext(key)
+            if suffix != options.suffix:
                 continue
-            names.append(name)
-            values.append(val)
-        if missing:
-            continue    # incomplete data
+            text_key = root+TXT_SUFFIX
 
-        annsets = [
-            parse_standoff(val, '{}/{}'.format(name, key), name)
-            for name, val in zip(names, values)
-        ]
+            names, values, missing = [name_from], [val_from], False
+            for name, db in list(datasets.items())[1:]:
+                val = db.get(key)
+                if val is None:
+                    missing_by_dataset[name] += 1
+                    warning('{} not found for {}'.format(key, name))
+                    missing = True
+                    continue
+                names.append(name)
+                values.append(val)
+            if missing:
+                continue    # incomplete data
 
-        from_aset = annsets[0]
-        for aset in annsets[1:]:
-            from_aset = remove(from_aset, aset, options)
+            annsets = [
+                parse_standoff(val, '{}/{}'.format(name, key), name)
+                for name, val in zip(names, values)
+            ]
 
-        for a in from_aset:
-            print(a)
-            
-        doc_count += 1
+            from_aset = annsets[0]
+            for aset in annsets[1:]:
+                from_aset = remove(from_aset, aset, options)
 
-    print('Done, processed {} (missing: {})'.format(
-        doc_count, dict(missing_by_dataset)))
+            for a in from_aset:
+                a.remove_id_prefix()
+
+            ann_str = '\n'.join(str(a) for a in from_aset)
+            out_db[key] = ann_str
+
+            if options.include_text:
+                out_db[text_key] = from_db.get(text_key)
+
+            doc_count += 1
+
+            if doc_count % 1000 == 0:
+                print('Inserted {}, committing...'.format(
+                    doc_count, end='', file=sys.stderr, flush=True))
+                out_db.commit()
+                print('done.', file=sys.stderr)
+
+        out_db.commit()
+
+    missing = 'none' if not missing_by_dataset else dict(missing_by_dataset)
+    print('Done, processed {} (missing: {})'.format(doc_count, missing))
 
 
 def get_datasets(options):
@@ -114,7 +140,7 @@ def get_datasets(options):
         # No close() as this is read-only and close() can block
         db = sqlitedict.SqliteDict(path, flag='r', autocommit=False)
         datasets[name] = db
-    return datasets    
+    return datasets
 
 
 def main(argv):
