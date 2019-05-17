@@ -13,11 +13,18 @@ MODULEDIR="$SCRIPTDIR/../modules/pubtator"
 
 INDIR="$SCRIPTDIR/../data/pubtator/original_data"
 INFILE="$INDIR/bioconcepts2pubtator_offsets.gz"
+IDDIR="$SCRIPTDIR/../data/pubmed/contents"
+IDFILE="$IDDIR/pubmed.sqlite.listing.ids"
 
 OUTDIR="$SCRIPTDIR/../data/pubtator/db"
 
 if [[ ! -e "$INFILE" ]]; then
     echo "$SCRIPT:ABORT: $INFILE not found"
+    exit 1
+fi
+
+if [[ ! -e "$IDFILE" ]]; then
+    echo "$SCRIPT:ABORT: $IDFILE not found"
     exit 1
 fi
 
@@ -34,5 +41,5 @@ echo "$SCRIPT:running \"$command\" on $INFILE" >&2
 
 mkdir -p "$OUTDIR"
 
-python3 "$command" --verbose  --retype-nominal --database --output "$dbpath" \
-	"$INFILE"
+python3 "$command" --verbose --ids "$IDFILE" --retype-nominal --database \
+	--output "$dbpath" "$INFILE"
