@@ -7,3 +7,6 @@
 [submodule "modules/annalign"]
 	path = modules/annalign
 	url = https://github.com/spyysalo/annalign.git
+[submodule "modules/jensenlab-tools"]
+	path = modules/jensenlab-tools
+	url = https://github.com/spyysalo/jensenlab-tools.git
