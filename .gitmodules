@@ -11,5 +11,5 @@
 	path = modules/jensenlab-tools
 	url = https://github.com/spyysalo/jensenlab-tools.git
 [submodule "jensenlab-tagger"]
-	path = jensenlab-tagger
+	path = modules/jensenlab-tagger
 	url = https://github.com/spyysalo/jensenlab-tagger.git
