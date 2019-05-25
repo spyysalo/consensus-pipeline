@@ -30,7 +30,7 @@ outpath="$OUTDIR/pubmed.fortagger.tsv"
 
 if [ -s "$outpath" ]; then
     echo "$SCRIPT:$outpath exists, skipping ..."
-    return 0
+    exit 0
 fi
 
 command="$TOOLDIR/formatfortagger.py"
