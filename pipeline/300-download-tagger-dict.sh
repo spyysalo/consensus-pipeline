@@ -23,7 +23,7 @@ else
     return 1
 fi
 
-OUTDIR="$SCRIPTDIR/../data/tagger/${dictionary}-dict"
+OUTDIR="$SCRIPTDIR/../data/tagger/${dictionary}_dict"
 
 missing=false
 for d in "entities" "global" "groups" "names"; do
