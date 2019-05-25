@@ -23,7 +23,7 @@ FRAGMENTED_SPAN = 'fragmented'
 SAME_SPAN = 'same-span'
 CONTAINMENT = 'containment'
 CROSSING_SPAN = 'crossing-span'
-CONSISTENCY = 'consistency'
+CONSISTENCY = 'document-consistency'
 TOTALS = 'TOTAL'
 
 # Order in which to show stats
@@ -89,28 +89,6 @@ def find_overlapping(textbounds):
     return overlapping
 
 
-def generate_id(prefix):
-    id_ = '{}{}'.format(prefix, generate_id.next_free[prefix])
-    generate_id.next_free[prefix] += 1
-    return id_
-generate_id.next_free = defaultdict(lambda: 1)
-
-
-def make_textbound(type_, span_str, text, stats):
-    id_ = generate_id('T')
-    spans = []
-    for span in span_str.split(';'):
-        start, end = (int(i) for i in span.split())
-        spans.append((start, end))
-    min_start = min(s[0] for s in spans)
-    max_end = max(s[1] for s in spans)
-    if len(spans) > 1:
-        warning('replacing fragmented span {} with {} {}'.format(
-            span_str, min_start, max_end))
-        stats[FRAGMENTED_SPAN][type_] += 1
-    return Textbound(id_, type_, min_start, max_end, text)
-
-
 def take_stats(txt, ann, fn, stats):
     annotations = []
     for ln, line in enumerate(ann.splitlines(), start=1):
@@ -123,7 +101,9 @@ def take_stats(txt, ann, fn, stats):
             stats[ENTITY_TEXT][text] += 1
             stats[TEXT_BY_TYPE.format(type_)][text] += 1
             stats[TOTALS]['textbounds'] += 1
-            annotations.append(make_textbound(type_, span, text, stats))
+            if len(span.split(';')) > 1:
+                stats[FRAGMENTED_SPAN][type_] += 1
+            annotations.append(Textbound(id_, type_, span, text))
         elif line[0] == 'N':
             stats[TOTALS]['normalizations'] += 1
         else:

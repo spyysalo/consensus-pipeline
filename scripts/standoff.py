@@ -1,6 +1,6 @@
 from itertools import chain
 
-from logging import error
+from logging import error, warning
 
 
 class Textbound(object):
