@@ -39,6 +39,11 @@ mkdir -p "$OUTDIR"
 
 outpath="$OUTDIR/pubmed.tagged.tsv"
 
+if [ -s "$outpath" ]; then
+    echo "$SCRIPT:$outpath exists, assuming complete and exiting." >&2
+    exit 0
+fi
+
 DICTDIR="$SCRIPTDIR/../data/tagger/${dictionary}_dict"
 
 for d in "entities" "global" "groups" "names"; do
