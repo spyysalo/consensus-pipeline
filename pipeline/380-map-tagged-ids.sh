@@ -4,15 +4,15 @@
 
 set -euo pipefail
 
-# Set to "tagger" for the smaller tagger dictionary or "full" for the
-# full dictionary.
-dictionary="tagger"
-#dictionary="full"
-
 SCRIPT="$(basename "$0")"
 
 # https://stackoverflow.com/a/246128
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+CONFIGDIR="$SCRIPTDIR/../config"
+
+# imports `dictionary` variable
+source "$CONFIGDIR/tagger_config.sh"
 
 MODULEDIR="$SCRIPTDIR/../modules/jensenlab-tools"
 
