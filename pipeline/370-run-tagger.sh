@@ -4,19 +4,17 @@
 
 set -euo pipefail
 
-# Set to "tagger" for the smaller tagger dictionary or "full" for the
-# full dictionary.
-dictionary="tagger"
-#dictionary="full"
-
 SCRIPT="$(basename "$0")"
 
 # https://stackoverflow.com/a/246128
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-MODULEDIR="$SCRIPTDIR/../modules/jensenlab-tagger"
-
 CONFIGDIR="$SCRIPTDIR/../config"
+
+# imports `dictionary` variable
+source "$CONFIGDIR/tagger_config.sh"
+
+MODULEDIR="$SCRIPTDIR/../modules/jensenlab-tagger"
 
 tagger="$MODULEDIR/tagcorpus"
 
@@ -56,9 +54,9 @@ done
 
 "$tagger" \
     --types="$CONFIGDIR/consensus_types.tsv" \
-    --entities="$DICTDIR/tagger_entities.tsv" \
-    --names="$DICTDIR/tagger_names.tsv" \
-    --stopwords="$DICTDIR/tagger_global.tsv" \
+    --entities="$DICTDIR/${dictionary}_entities.tsv" \
+    --names="$DICTDIR/${dictionary}_names.tsv" \
+    --stopwords="$DICTDIR/${dictionary}_global.tsv" \
     --autodetect \
     < "$inpath" \
     > "$outpath"
