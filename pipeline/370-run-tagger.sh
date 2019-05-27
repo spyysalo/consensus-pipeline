@@ -20,6 +20,7 @@ tagger="$MODULEDIR/tagcorpus"
 
 if [ ! -e  "$tagger" ]; then
     echo "$SCRIPT:ABORT:missing $tagger (tagger not compiled?)" >&2
+    exit 1
 fi
 
 INDIR="$SCRIPTDIR/../data/pubmed/fortagger"

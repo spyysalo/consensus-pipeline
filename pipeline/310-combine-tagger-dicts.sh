@@ -25,6 +25,7 @@ for d in $DICTS; do
     inpath="$DICTDIR/$d"
     if [ ! -s "$inpath" ]; then
 	echo "$SCRIPT:ABORT:missing $inpath" >&2
+	exit 1
     fi
     indicts="$indicts $inpath"
 done
