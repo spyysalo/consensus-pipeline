@@ -35,7 +35,7 @@ class Textbound(object):
     def remove_id_prefix(self, cascade=True):
         self.id = self.id.split(':')[-1]
         if cascade:
-            for n in self.normalizations():
+            for n in self.normalizations:
                 n.remove_id_prefix()
 
     def __eq__(self, other):
