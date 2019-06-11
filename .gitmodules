@@ -13,3 +13,6 @@
 [submodule "jensenlab-tagger"]
 	path = modules/jensenlab-tagger
 	url = https://github.com/spyysalo/jensenlab-tagger.git
+[submodule "modules/tees-xml"]
+	path = modules/tees-xml
+	url = https://github.com/spyysalo/tees-xml.git
