@@ -11,14 +11,28 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 OUTDIR="$SCRIPTDIR/../data/taxonomy"
 
-RANK_OUTPUT="$OUTDIR/rank.tsv"
+declare -a DMPFILES=(
+    "nodes.dmp"
+    "division.dmp"
+    "merged.dmp"
+    "delnodes.dmp"
+)
 
-mkdir -p "$OUTDIR"
+missing=false
+for d in "${DMPFILES[@]}"; do
+    if [ ! -s "$OUTDIR/$d" ]; then
+	echo "SCRIPT:$OUTDIR/$d not found, downloading ..." 2>&1
+	missing=true
+	break
+    fi
+done
 
-if [ -e "$RANK_OUTPUT" ]; then
-    echo "$SCRIPT:$RANK_OUTPUT exists, skipping ..." >&2
+if [ "$missing" = false ] ; then
+    echo "$SCRIPT:found all files, exiting ..." >&2
     exit 0
 fi
+
+mkdir -p "$OUTDIR"
 
 echo "$SCRIPT:creating temporary work directory ..." >&2
 TMPDIR=`mktemp -d`
@@ -37,8 +51,9 @@ wget 'ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz'
 echo "$SCRIPT:unpacking taxdump.tar.gz ..." >&2
 tar xvzf taxdump.tar.gz
 
-# Grab fields tax_id and rank from nodes.dmp
-echo "$SCRIPT:storing ranks in $RANK_OUTPUT ..." >&2
-cut -f 1,5 nodes.dmp > "$RANK_OUTPUT"
+for d in "${DMPFILES[@]}"; do
+    echo "Copying $d to $OUTDIR ..." 2>&1
+    cp "$d" "$OUTDIR"
+done
 
 echo "$SCRIPT:done." >&2
