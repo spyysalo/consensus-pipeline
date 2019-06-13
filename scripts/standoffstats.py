@@ -15,26 +15,50 @@ except ImportError:
     raise
 
 
+# Normalization DB/ontology prefixes
+TAXONOMY_PREFIX = 'NCBITaxon:'
+
+# NCBI Taxonomy dump files
+TAXONOMY_NODES = 'nodes.dmp'
+TAXONOMY_DIVISION= 'division.dmp'
+TAXONOMY_MERGED = 'merged.dmp'
+
 # Keys for stats dict
 ENTITY_TYPE = 'entity-type'
 ENTITY_TEXT = 'text-overall'
 TEXT_BY_TYPE = 'text ({})'
 FRAGMENTED_SPAN = 'fragmented'
 SAME_SPAN = 'same-span'
+SAME_SPAN_TEXT = 'same-span-text'
 CONTAINMENT = 'containment'
+CONTAINMENT_TEXT = 'containment-text'
 CROSSING_SPAN = 'crossing-span'
+CROSSING_SPAN_TEXT = 'crossing-span-text'
+TAXONOMY_RANK = 'taxonomy-rank'
+TAXONOMY_DIV = 'taxonomy-division'
+TAXONOMY_RANK_DIV = 'taxonomy-rank/division'
+TAXONOMY_UNKNOWN = 'unknown-taxid'
+TEXT_BY_RANK = 'rank ({})'
 CONSISTENCY = 'document-consistency'
 TOTALS = 'TOTAL'
 
 # Order in which to show stats
 STATS_ORDER = [
     CROSSING_SPAN,
+    CROSSING_SPAN_TEXT,
     SAME_SPAN,
+    SAME_SPAN_TEXT,
     CONTAINMENT,
+    CONTAINMENT_TEXT,
     TEXT_BY_TYPE,
     FRAGMENTED_SPAN,
     ENTITY_TEXT,
     ENTITY_TYPE,
+    TAXONOMY_RANK,
+    TAXONOMY_DIV,
+    TAXONOMY_RANK_DIV,
+    TAXONOMY_UNKNOWN,
+    TEXT_BY_RANK,
     CONSISTENCY,
     TOTALS,
 ]
@@ -49,6 +73,8 @@ def argparser():
                     help='annotation suffix')
     ap.add_argument('-t', '--show-top', metavar='N', type=int, default=10,
                     help='show top N most frequent')
+    ap.add_argument('-T', '--taxdata', metavar='DIR', default=None,
+                    help='NCBI taxonomy data directory')
     ap.add_argument('data', nargs='+', metavar='DB')
     return ap
 
@@ -89,7 +115,7 @@ def find_overlapping(textbounds):
     return overlapping
 
 
-def take_stats(txt, ann, fn, stats):
+def take_stats(txt, ann, fn, stats, options):
     annotations = []
     for ln, line in enumerate(ann.splitlines(), start=1):
         if not line or line.isspace() or line[0] not in 'TN':
@@ -105,6 +131,19 @@ def take_stats(txt, ann, fn, stats):
                 stats[FRAGMENTED_SPAN][type_] += 1
             annotations.append(Textbound(id_, type_, span, text))
         elif line[0] == 'N':
+            id_, type_rid_tid, text = line.split('\t')
+            type_, rid, tid = type_rid_tid.split(' ')
+            if (tid.startswith(TAXONOMY_PREFIX) and
+                options.taxdata is not None):
+                tax_id = tid[len(TAXONOMY_PREFIX):]
+                rank = options.taxdata.get_rank(tax_id)
+                if rank == '<UNKNOWN>':
+                    stats[TAXONOMY_UNKNOWN][tax_id] += 1
+                division= options.taxdata.get_division(tax_id)
+                stats[TAXONOMY_RANK][rank] += 1
+                stats[TAXONOMY_DIV][division] += 1
+                stats[TAXONOMY_RANK_DIV]['/'.join([rank, division])] += 1
+                stats[TEXT_BY_RANK.format(rank)][text] += 1
             stats[TOTALS]['normalizations'] += 1
         else:
             assert False, 'internal error'
@@ -119,13 +158,17 @@ def take_stats(txt, ann, fn, stats):
                 # same span, different types
                 is_consistent = False
             stats[SAME_SPAN][sorted_types] += 1
+            stats[SAME_SPAN_TEXT][t1.text] += 1
         elif t1.contains(t2):
             stats[CONTAINMENT]['{} in {}'.format(t2.type, t1.type)] += 1
+            stats[CONTAINMENT_TEXT]['{} in {}'.format(t2.text, t1.text)] += 1
         elif t2.contains(t1):
             stats[CONTAINMENT]['{} in {}'.format(t1.type, t2.type)] += 1
+            stats[CONTAINMENT_TEXT]['{} in {}'.format(t1.text, t2.text)] += 1
         elif t1.span_crosses(t2):
             is_consistent = False
             stats[CROSSING_SPAN]['{}/{}'.format(t1.type, t2.type)] += 1
+            stats[CROSSING_SPAN_TEXT]['{}/{}'.format(t1.text, t2.text)] += 1
         else:
             assert False, 'internal error'
     if is_consistent:
@@ -144,7 +187,7 @@ def process_db(path, stats, options):
             continue
         # txt_key = '{}.txt'.format(root)
         # txt = db[txt_key]     # everything hangs if I do this
-        take_stats('', val, key, stats)
+        take_stats('', val, key, stats, options)
         count += 1
         if options.limit is not None and count >= options.limit:
             break
@@ -178,8 +221,59 @@ def report_stats(stats, options, out=sys.stdout):
             print('[and {} more]'.format(extra), file=out)
 
 
+
+class TaxonomyData(object):
+    def __init__(self, rank_by_id, div_by_id, new_id):
+        self.rank_by_id = rank_by_id
+        self.div_by_id = div_by_id
+        self.new_id = new_id
+
+    def get_rank(self, tax_id):
+        if tax_id not in self.rank_by_id and tax_id in self.new_id:
+            tax_id = self.new_id[tax_id]    # old id, use merged
+        return self.rank_by_id.get(tax_id, '<UNKNOWN>')
+
+    def get_division(self, tax_id):
+        if tax_id not in self.div_by_id and tax_id in self.new_id:
+            tax_id = self.new_id[tax_id]    # old id, use merged
+        return self.div_by_id.get(tax_id, '<UNKNOWN>')
+
+    @classmethod
+    def from_directory(cls, path):
+        # Load NCBI taxonomy data from given directory
+        div_name_by_id = {}
+        with open(os.path.join(path, TAXONOMY_DIVISION)) as f:
+            for ln, l in enumerate(f, start=1):
+                l = l.rstrip('\n')
+                fields = l.split('\t')[::2]    # skip separators
+                div_id, div_code, div_name = fields[:3]
+                div_name_by_id[div_id] = div_name
+
+        rank_by_id = {}
+        div_by_id = {}
+        with open(os.path.join(path, TAXONOMY_NODES)) as f:
+            for ln, l in enumerate(f, start=1):
+                l = l.rstrip('\n')
+                fields = l.split('\t')[::2]    # skip separators
+                tax_id, parent_id, rank, embl_code, div_id = fields[:5]
+                rank_by_id[tax_id] = rank
+                div_by_id[tax_id] = div_name_by_id[div_id]
+
+        new_id_by_old_id = {}
+        with open(os.path.join(path, TAXONOMY_MERGED)) as f:
+            for ln, l in enumerate(f, start=1):
+                l = l.rstrip('\n')
+                fields = l.split('\t')[::2]    # skip separators
+                old_id, new_id = fields[:2]
+                new_id_by_old_id[old_id] = new_id
+
+        return cls(rank_by_id, div_by_id, new_id_by_old_id)
+
+
 def main(argv):
     args = argparser().parse_args(argv[1:])
+    if args.taxdata is not None:
+        args.taxdata = TaxonomyData.from_directory(args.taxdata)
     for d in args.data:
         stats = process(d, args)
         report_stats(stats, args)
