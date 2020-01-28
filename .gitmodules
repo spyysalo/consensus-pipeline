@@ -13,3 +13,6 @@
 [submodule "modules/tees-xml"]
 	path = modules/tees-xml
 	url = https://github.com/spyysalo/tees-xml.git
+[submodule "modules/annalign"]
+	path = modules/annalign
+	url = https://github.com/spyysalo/annalign.git
