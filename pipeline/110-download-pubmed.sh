@@ -18,9 +18,9 @@ OUTDIR="$SCRIPTDIR/../data/pubmed/original_data"
 
 mkdir -p "$OUTDIR"
 
-for i in $(seq -w 1 "$STEP" 972); do
+for i in $(seq -w 1 "$STEP" 1015); do
     # package
-    r="pubmed19n0$i.xml.gz"
+    r="pubmed20n$i.xml.gz"
     url="$BASEURL/$r"
     if [ -e "$OUTDIR/$r" ]; then
 	echo "$SCRIPT:$OUTDIR/$r exists, skipping ..." >&2
@@ -29,7 +29,7 @@ for i in $(seq -w 1 "$STEP" 972); do
 	wget -P "$OUTDIR" "$url"
     fi
     # checksum
-    r="pubmed19n0$i.xml.gz.md5"
+    r="pubmed20n$i.xml.gz.md5"
     url="$BASEURL/$r"
     if [ -e "$OUTDIR/$r" ]; then
 	echo "$SCRIPT:$OUTDIR/$r exists, skipping ..." >&2
